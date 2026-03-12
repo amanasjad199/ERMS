@@ -186,16 +186,6 @@ npm run build
 npm run preview
 ```
 
-## Default Users
-
-After seeding the database, you can log in with these accounts:
-
-| Role | Email | Password |
-|------|-------|----------|
-| Super Admin | admin@erms.com | admin123 |
-| Moderator | moderator@erms.com | admin123 |
-| User | user@erms.com | admin123 |
-
 ## API Documentation
 
 Once the backend is running, access the Swagger API documentation at:
