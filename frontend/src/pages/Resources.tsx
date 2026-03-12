@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { MapPin, Users, Plus } from 'lucide-react';
 import { resourceApi, bookingApi } from '../services/api';
-import { Card, CardContent, Badge, PageSpinner, EmptyState, Button, Input, Select, Modal } from '../components/ui';
+import { Card, CardContent, Badge, PageSpinner, EmptyState, Button, Input, Select, Modal, Pagination } from '../components/ui';
+import type { PaginationInfo } from '../components/ui';
 import { Resource, ResourceCategory } from '../types';
 import toast from 'react-hot-toast';
 
@@ -19,6 +20,8 @@ const Resources = () => {
     endTime: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState<PaginationInfo | null>(null);
 
   const categories: { value: string; label: string }[] = [
     { value: '', label: 'All Categories' },
@@ -35,9 +38,10 @@ const Resources = () => {
     const fetchResources = async () => {
       setIsLoading(true);
       try {
-        const params: { category?: string; search?: string; available?: boolean; limit?: number } = {
+        const params: { category?: string; search?: string; available?: boolean; page?: number; limit?: number } = {
           available: true,
-          limit: 100
+          page,
+          limit: 12,
         };
         if (category) params.category = category;
         if (search) params.search = search;
@@ -45,6 +49,7 @@ const Resources = () => {
         const response = await resourceApi.getAll(params);
         if (isMounted) {
           setResources(response.data.data.items);
+          setPagination(response.data.data.pagination);
         }
       } catch (error) {
         if (isMounted) {
@@ -65,7 +70,7 @@ const Resources = () => {
       isMounted = false;
       clearTimeout(timer);
     };
-  }, [category, search]);
+  }, [category, search, page]);
 
   const openBookingModal = (resource: Resource) => {
     setSelectedResource(resource);
@@ -127,13 +132,13 @@ const Resources = () => {
         <Input
           placeholder="Search resources..."
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
           className="flex-1"
         />
         <Select
           options={categories}
           value={category}
-          onChange={(e) => setCategory(e.target.value)}
+          onChange={(e) => { setCategory(e.target.value); setPage(1); }}
           className="sm:w-48"
         />
       </div>
@@ -195,6 +200,10 @@ const Resources = () => {
             </Card>
           ))}
         </div>
+      )}
+
+      {pagination && (
+        <Pagination pagination={pagination} onPageChange={setPage} />
       )}
 
       {/* Booking Modal */}

@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Ban, CheckCircle, Shield } from 'lucide-react';
 import { adminApi } from '../../services/api';
-import { Card, CardContent, Badge, PageSpinner, EmptyState, Button, Modal, Select } from '../../components/ui';
+import { Card, CardContent, Badge, PageSpinner, EmptyState, Button, Modal, Select, Pagination } from '../../components/ui';
+import type { PaginationInfo } from '../../components/ui';
 import { User, Role } from '../../types';
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
@@ -13,6 +14,8 @@ const AdminUsers = () => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
   const [newRole, setNewRole] = useState<Role>('USER');
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState<PaginationInfo | null>(null);
 
   const roleOptions = [
     { value: 'USER', label: 'User' },
@@ -22,12 +25,13 @@ const AdminUsers = () => {
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [page]);
 
   const fetchUsers = async () => {
     try {
-      const response = await adminApi.getUsers({ limit: 100 });
+      const response = await adminApi.getUsers({ page, limit: 12 });
       setUsers(response.data.data.items);
+      setPagination(response.data.data.pagination);
     } catch (error) {
       console.error('Failed to fetch users:', error);
     } finally {
@@ -248,6 +252,10 @@ const AdminUsers = () => {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {pagination && (
+        <Pagination pagination={pagination} onPageChange={setPage} />
       )}
 
       {/* Role Change Modal */}

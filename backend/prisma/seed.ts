@@ -7,49 +7,45 @@ const prisma = new PrismaClient();
 async function main(): Promise<void> {
   console.log('Seeding database...');
 
+  const superAdminPassword = process.env.SUPER_ADMIN_PASSWORD;
+  const moderatorPassword = process.env.MODERATOR_PASSWORD;
+  if (!superAdminPassword) {
+    throw new Error('SUPER_ADMIN_PASSWORD environment variable is required for seeding');
+  }
+  if (!moderatorPassword) {
+    throw new Error('MODERATOR_PASSWORD environment variable is required for seeding');
+  }
+
   // Create Super Admin
-  const hashedPassword = await bcrypt.hash('admin123', 12);
+  const hashedSuperAdminPassword = await bcrypt.hash(superAdminPassword, 12);
+  const hashedModeratorPassword = await bcrypt.hash(moderatorPassword, 12);
 
   const superAdmin = await prisma.user.upsert({
     where: { email: 'admin@erms.com' },
-    update: {},
+    update: { password: hashedSuperAdminPassword },
     create: {
       email: 'admin@erms.com',
-      password: hashedPassword,
+      password: hashedSuperAdminPassword,
       firstName: 'Super',
       lastName: 'Admin',
       role: Role.SUPER_ADMIN,
     },
   });
-  console.log('Created Super Admin:', superAdmin.email);
+  console.log('Created/Updated Super Admin:', superAdmin.email);
 
   // Create Moderator
   const moderator = await prisma.user.upsert({
     where: { email: 'moderator@erms.com' },
-    update: {},
+    update: { password: hashedModeratorPassword },
     create: {
       email: 'moderator@erms.com',
-      password: hashedPassword,
+      password: hashedModeratorPassword,
       firstName: 'Mod',
       lastName: 'User',
       role: Role.MODERATOR,
     },
   });
-  console.log('Created Moderator:', moderator.email);
-
-  // Create Regular User
-  const user = await prisma.user.upsert({
-    where: { email: 'user@erms.com' },
-    update: {},
-    create: {
-      email: 'user@erms.com',
-      password: hashedPassword,
-      firstName: 'Regular',
-      lastName: 'User',
-      role: Role.USER,
-    },
-  });
-  console.log('Created User:', user.email);
+  console.log('Created/Updated Moderator:', moderator.email);
 
   // Create Sample Resources
   const resources = [

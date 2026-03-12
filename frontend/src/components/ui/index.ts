@@ -7,3 +7,5 @@ export { default as Select } from './Select';
 export { default as Spinner, PageSpinner } from './Spinner';
 export { default as EmptyState } from './EmptyState';
 export { default as Logo } from './Logo';
+export { default as Pagination } from './Pagination';
+export type { PaginationInfo } from './Pagination';

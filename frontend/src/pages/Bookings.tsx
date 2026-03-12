@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Calendar, Clock, Edit2, X } from 'lucide-react';
 import { bookingApi } from '../services/api';
-import { Card, CardContent, Badge, PageSpinner, EmptyState, Button, Select, Modal, Input } from '../components/ui';
+import { Card, CardContent, Badge, PageSpinner, EmptyState, Button, Select, Modal, Input, Pagination } from '../components/ui';
+import type { PaginationInfo } from '../components/ui';
 import { Booking, BookingStatus } from '../types';
 import toast from 'react-hot-toast';
 
@@ -19,6 +20,8 @@ const Bookings = () => {
     endTime: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [page, setPage] = useState(1);
+  const [paginationInfo, setPaginationInfo] = useState<PaginationInfo | null>(null);
 
   const statusOptions = [
     { value: '', label: 'All Status' },
@@ -30,6 +33,7 @@ const Bookings = () => {
 
   const handleStatusChange = (newStatus: string) => {
     setStatusFilter(newStatus);
+    setPage(1);
     if (newStatus) {
       setSearchParams({ status: newStatus });
     } else {
@@ -43,12 +47,16 @@ const Bookings = () => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        const params: { status?: string } = {};
+        const params: { status?: string; page?: number; limit?: number } = {
+          page,
+          limit: 12,
+        };
         if (statusFilter) params.status = statusFilter;
 
         const response = await bookingApi.getMyBookings(params);
         if (isMounted) {
           setBookings(response.data.data.items);
+          setPaginationInfo(response.data.data.pagination);
         }
       } catch (error) {
         if (isMounted) {
@@ -66,7 +74,7 @@ const Bookings = () => {
     return () => {
       isMounted = false;
     };
-  }, [statusFilter]);
+  }, [statusFilter, page]);
 
   const fetchBookings = async () => {
     setIsLoading(true);
@@ -246,6 +254,10 @@ const Bookings = () => {
             </Card>
           ))}
         </div>
+      )}
+
+      {paginationInfo && (
+        <Pagination pagination={paginationInfo} onPageChange={setPage} />
       )}
 
       {/* Edit Modal */}

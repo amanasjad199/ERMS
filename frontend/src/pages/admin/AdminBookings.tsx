@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Check, X, Clock } from 'lucide-react';
 import { adminApi } from '../../services/api';
-import { Card, CardContent, Badge, PageSpinner, EmptyState, Button, Select, Modal } from '../../components/ui';
+import { Card, CardContent, Badge, PageSpinner, EmptyState, Button, Select, Modal, Pagination } from '../../components/ui';
+import type { PaginationInfo } from '../../components/ui';
 import { Booking, BookingStatus } from '../../types';
 import toast from 'react-hot-toast';
 
@@ -13,6 +14,8 @@ const AdminBookings = () => {
   const [actionType, setActionType] = useState<'approve' | 'reject' | null>(null);
   const [adminNotes, setAdminNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [page, setPage] = useState(1);
+  const [paginationInfo, setPaginationInfo] = useState<PaginationInfo | null>(null);
 
   const statusOptions = [
     { value: '', label: 'All Status' },
@@ -24,16 +27,20 @@ const AdminBookings = () => {
 
   useEffect(() => {
     fetchBookings();
-  }, [statusFilter]);
+  }, [statusFilter, page]);
 
   const fetchBookings = async () => {
     setIsLoading(true);
     try {
-      const params: { status?: string } = {};
+      const params: { status?: string; page?: number; limit?: number } = {
+        page,
+        limit: 12,
+      };
       if (statusFilter) params.status = statusFilter;
 
       const response = await adminApi.getAllBookings(params);
       setBookings(response.data.data.items);
+      setPaginationInfo(response.data.data.pagination);
     } catch (error) {
       console.error('Failed to fetch bookings:', error);
     } finally {
@@ -107,7 +114,7 @@ const AdminBookings = () => {
         <Select
           options={statusOptions}
           value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
+          onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
           className="sm:w-48"
         />
       </div>
@@ -195,6 +202,10 @@ const AdminBookings = () => {
             </Card>
           ))}
         </div>
+      )}
+
+      {paginationInfo && (
+        <Pagination pagination={paginationInfo} onPageChange={setPage} />
       )}
 
       {/* Action Modal */}
